@@ -1,6 +1,7 @@
 <template>
  <div class="text-center">
     <v-dialog
+      v-model="dialog"
       width="500"
     >
       <template v-slot:activator="{ on }">
@@ -62,7 +63,12 @@
                 ></v-date-picker>
                 </v-menu>
 
-              <v-btn text class="info mx-0 mt-3" @click="submit">Add project</v-btn>
+              <v-btn
+              text
+              class="info mx-0 mt-3"
+              @click="submit"
+              :loading="loadingStatus"
+              >Add project</v-btn>
           </v-form>
         </v-card-text>
       </v-card>
@@ -71,7 +77,7 @@
 </template>
 
 <script>
-// import format from 'date-fns/format';
+import db from '@/firebase';
 
 export default {
   data: vm => ({
@@ -83,11 +89,25 @@ export default {
     inputRules: [
       v => v.length >= 3 || 'Minimum length is 3 characters',
     ],
+    loadingStatus: false,
+    dialog: false,
   }),
   methods: {
     submit() {
       if (this.$refs.form.validate()) {
-        // console.log(this.title, this.content, this.due);
+        const project = {
+          person: 'Me',
+          title: this.title,
+          content: this.content,
+          due: this.dateFormatted,
+          status: 'ongoing',
+        };
+        this.loadingStatus = true;
+        db.collection('projects').add(project).then(() => {
+          this.loadingStatus = false;
+          this.dialog = false;
+          this.$emit('projectAdded');
+        });
       }
     },
     formatDate(date) {
